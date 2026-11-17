@@ -43,6 +43,7 @@ summary::-webkit-details-marker{display:none}
 .empty{color:var(--mute);padding:18px 0}
 .foot{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;color:var(--mute);font-size:14px}
 .foot input{flex:0 1 90px;padding:6px 8px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}.tab{background:transparent;color:var(--ink);border:1px solid var(--line)}.tab.on{background:var(--btn);color:var(--btnt);border-color:var(--btn)}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.top h1{margin:0}
 select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
@@ -61,6 +62,7 @@ select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 <button id="add" data-t="add">Add customer</button>
 </div>
 <div class="row"><input id="q" data-p="search" autocomplete="off"></div>
+<div class="tabs"><button id="tOwe" class="tab on"></button><button id="tAll" class="tab"></button></div>
 
 <div id="list"></div>
 
@@ -73,8 +75,8 @@ select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 </main>
 <script>
 var KEY="deni-v1",S={cur:"KSh",dial:"254",lang:((navigator.language||"en").slice(0,2)==="sw"?"sw":"en"),c:[]};
-var L={en:{add:'Add customer',name:'Customer name',phone:'Phone (optional)',search:'Search customers',cur:'Currency',dial:'Dial code',copy:'Copy summary',copied:'Copied',copyfail:'Copy failed',note:'Saved on this device only. Clearing browser data erases it.',owed1:'Owed by 1 customer',owedN:'Owed by {n} customers',none:'Nobody owes you right now',empty1:'Add your first customer above, then record what they take on credit.',empty2:'No customer matches that search.',nophone:'No phone',credit:'Credit',settled:'Settled',amt:'Amount',notePh:'Note (e.g. sugar, bread)',addCr:'Add credit',pay:'Record payment',remind:'Remind on WhatsApp',del:'Delete',noEntries:'No entries yet.',delConfirm:'Delete {n} and all their entries?',msg:'Hello {n}, a friendly reminder that you have an outstanding balance of {b}. Thank you!',nobodyOwes:'Nobody owes anything.'},
-sw:{add:'Ongeza mteja',name:'Jina la mteja',phone:'Simu (si lazima)',search:'Tafuta wateja',cur:'Sarafu',dial:'Msimbo wa nchi',copy:'Nakili muhtasari',copied:'Imenakiliwa',copyfail:'Imeshindwa kunakili',note:'Data inahifadhiwa kwenye kifaa hiki pekee. Ukifuta data ya kivinjari, itapotea.',owed1:'Mteja 1 anakudai',owedN:'Wateja {n} wanakudai',none:'Hakuna anayekudai sasa hivi',empty1:'Ongeza mteja wako wa kwanza hapo juu, kisha andika deni analochukua.',empty2:'Hakuna mteja anayelingana na utafutaji huo.',nophone:'Hakuna simu',credit:'Amelipa ziada',settled:'Amelipa yote',amt:'Kiasi',notePh:'Maelezo (mf. sukari, mkate)',addCr:'Ongeza deni',pay:'Weka malipo',remind:'Kumbusha kwa WhatsApp',del:'Futa',noEntries:'Hakuna rekodi bado.',delConfirm:'Futa {n} na rekodi zake zote?',msg:'Habari {n}, ni ukumbusho tu kwamba una deni la {b}. Asante!',nobodyOwes:'Hakuna anayedaiwa.'}};
+var L={en:{add:'Add customer',tabOwing:'Owing',tabAll:'All',name:'Customer name',phone:'Phone (optional)',search:'Search customers',cur:'Currency',dial:'Dial code',copy:'Copy summary',copied:'Copied',copyfail:'Copy failed',note:'Saved on this device only. Clearing browser data erases it.',owed1:'Owed by 1 customer',owedN:'Owed by {n} customers',none:'Nobody owes you right now',empty1:'Add your first customer above, then record what they take on credit.',empty2:'No customer matches that search.',nophone:'No phone',credit:'Credit',settled:'Settled',amt:'Amount',notePh:'Note (e.g. sugar, bread)',addCr:'Add credit',pay:'Record payment',remind:'Remind on WhatsApp',del:'Delete',noEntries:'No entries yet.',delConfirm:'Delete {n} and all their entries?',msg:'Hello {n}, a friendly reminder that you have an outstanding balance of {b}. Thank you!',nobodyOwes:'Nobody owes anything.'},
+sw:{add:'Ongeza mteja',tabOwing:'Wanaodaiwa',tabAll:'Wote',name:'Jina la mteja',phone:'Simu (si lazima)',search:'Tafuta wateja',cur:'Sarafu',dial:'Msimbo wa nchi',copy:'Nakili muhtasari',copied:'Imenakiliwa',copyfail:'Imeshindwa kunakili',note:'Data inahifadhiwa kwenye kifaa hiki pekee. Ukifuta data ya kivinjari, itapotea.',owed1:'Mteja 1 anakudai',owedN:'Wateja {n} wanakudai',none:'Hakuna anayekudai sasa hivi',empty1:'Ongeza mteja wako wa kwanza hapo juu, kisha andika deni analochukua.',empty2:'Hakuna mteja anayelingana na utafutaji huo.',nophone:'Hakuna simu',credit:'Amelipa ziada',settled:'Amelipa yote',amt:'Kiasi',notePh:'Maelezo (mf. sukari, mkate)',addCr:'Ongeza deni',pay:'Weka malipo',remind:'Kumbusha kwa WhatsApp',del:'Futa',noEntries:'Hakuna rekodi bado.',delConfirm:'Futa {n} na rekodi zake zote?',msg:'Habari {n}, ni ukumbusho tu kwamba una deni la {b}. Asante!',nobodyOwes:'Hakuna anayedaiwa.'}};
 function tr(k,v){var s=(L[S.lang]||L.en)[k]||L.en[k]||k;if(v)for(var i in v)s=s.replace("{"+i+"}",function(){return v[i]});return s}
 function dt(x){return x.ts?new Date(x.ts).toLocaleDateString(S.lang==="sw"?"sw-KE":"en-GB",{day:"numeric",month:"short"}):x.d}
 try{var raw=localStorage.getItem(KEY);if(raw){S=Object.assign(S,JSON.parse(raw))}}catch(e){}
@@ -86,22 +88,25 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(m){return{"&":"&amp;
 function wa(c){var d=c.p.replace(/\D/g,"");if(!d)return"";if(d.charAt(0)==="0")d=S.dial+d.slice(1);
 var m=tr("msg",{n:c.n,b:fmt(bal(c))});
 return"https://wa.me/"+d+"?text="+encodeURIComponent(m)}
-var openId=null;
+var openId=null,view="owing";
 function render(){
 var q=$("q").value.toLowerCase(),tot=0,n=0;
 S.c.forEach(function(c){var b=bal(c);if(b>0){tot+=b;n++}});
 $("total").textContent=fmt(tot);
+$("tOwe").textContent=tr("tabOwing")+" ("+n+")";$("tAll").textContent=tr("tabAll")+" ("+S.c.length+")";
+$("tOwe").className="tab"+(view==="owing"?" on":"");$("tAll").className="tab"+(view==="all"?" on":"");
 $("sub").textContent=n?tr(n===1?"owed1":"owedN",{n:n}):tr("none");
-var l=S.c.filter(function(c){return c.n.toLowerCase().indexOf(q)>-1}).sort(function(a,b){return bal(b)-bal(a)});
-if(!l.length){$("list").innerHTML='<p class="empty">'+(S.c.length?tr("empty2"):tr("empty1"))+"</p>";return}
+var l=S.c.filter(function(c){return c.n.toLowerCase().indexOf(q)>-1&&(q||view==="all"||bal(c)>0)}).sort(function(a,b){return bal(b)-bal(a)});
+if(!l.length){$("list").innerHTML='<p class="empty">'+(!S.c.length?tr("empty1"):q?tr("empty2"):tr("none"))+"</p>";return}
 $("list").innerHTML=l.map(function(c){var b=bal(c),link=wa(c);
 var tx=c.t.slice().reverse().slice(0,12).map(function(x){return'<div class="tx"><span>'+esc(dt(x))+(x.m?" – "+esc(x.m):"")+'</span><span class="'+(x.a>0?"cr":"pd")+'">'+(x.a>0?"+":"−")+Math.abs(x.a).toLocaleString()+"</span></div>"}).join("")||'<p class="ph">'+tr("noEntries")+'</p>';
 return'<details data-id="'+c.id+'"'+(c.id===openId?" open":"")+'><summary><span><span class="nm">'+esc(c.n)+'</span><br><span class="ph">'+esc(c.p||tr("nophone"))+'</span></span><span class="bal'+(b<=0?" zero":"")+'">'+(b>0?fmt(b):b<0?tr("credit")+" "+fmt(b):tr("settled"))+'</span></summary><div class="body">'+
 '<div class="row"><input class="amt" type="number" min="0" step="any" placeholder="'+tr("amt")+'" inputmode="decimal"><input class="note" placeholder="'+tr("notePh")+'"></div>'+
 '<div class="row"><button data-act="cr">'+tr("addCr")+'</button><button class="pay" data-act="pd">'+tr("pay")+'</button>'+(link&&b>0?'<a class="btn ghost" target="_blank" rel="noopener" href="'+link+'">'+tr("remind")+'</a>':"")+'<button class="ghost" data-act="del">'+tr("del")+'</button></div>'+tx+"</div></details>"}).join("")}
 $("add").onclick=function(){var n=$("nm").value.trim();if(!n){$("nm").focus();return}
-var c={id:Date.now().toString(36),n:n,p:$("ph").value.trim(),t:[]};S.c.push(c);openId=c.id;$("nm").value="";$("ph").value="";save();render()};
+var c={id:Date.now().toString(36),n:n,p:$("ph").value.trim(),t:[]};S.c.push(c);openId=c.id;view="all";$("nm").value="";$("ph").value="";save();render()};
 $("q").oninput=render;
+$("tOwe").onclick=function(){view="owing";render()};$("tAll").onclick=function(){view="all";render()};
 $("list").addEventListener("toggle",function(e){if(e.target.open)openId=e.target.dataset.id},true);
 $("list").addEventListener("click",function(e){var b=e.target.closest("button[data-act]");if(!b)return;
 var d=b.closest("details"),id=d.dataset.id,c=S.c.filter(function(x){return x.id===id})[0],act=b.dataset.act;
